@@ -6,37 +6,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  Plus,
-  Search,
-  Filter,
-  Download,
-  Receipt,
-  Trash2,
-  Edit,
-  ChevronLeft,
-  ChevronRight,
+  Plus, Search, Filter, Download, Receipt, Trash2, Edit,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+// ✅ FIXED: Schema with recurring as required boolean (NOT optional)
 const expenseSchema = z.object({
   description: z.string().min(2, "Description required"),
   amount: z.string().min(1, "Amount required"),
@@ -44,9 +30,10 @@ const expenseSchema = z.object({
   date: z.string().min(1, "Date required"),
   paymentMethod: z.string().min(1, "Payment method required"),
   notes: z.string().optional(),
-  recurring: z.boolean().default(false),
+  recurring: z.boolean(), // ✅ NO .default() here — causes type mismatch with useForm
 });
 
+// ✅ FIXED: Type derived from schema — no manual type needed
 type ExpenseForm = z.infer<typeof expenseSchema>;
 
 const categories = [
@@ -58,16 +45,16 @@ const categories = [
 const paymentMethods = ["Cash", "Bank Transfer", "Credit Card", "JazzCash", "EasyPaisa"];
 
 const mockExpenses = [
-  { id: 1, description: "Ahrefs Subscription", category: "Tools", amount: 15000, date: "2024-12-04", method: "Credit Card", recurring: true, status: "approved" },
-  { id: 2, description: "Facebook Ads", category: "Ads", amount: 25000, date: "2024-12-04", method: "Bank Transfer", recurring: false, status: "approved" },
-  { id: 3, description: "Office Rent", category: "Office Rent", amount: 50000, date: "2024-12-03", method: "Bank Transfer", recurring: true, status: "approved" },
-  { id: 4, description: "Freelancer Payment", category: "Freelancers", amount: 30000, date: "2024-12-02", method: "JazzCash", recurring: false, status: "pending" },
-  { id: 5, description: "Internet Bill", category: "Internet", amount: 5000, date: "2024-12-01", method: "Cash", recurring: true, status: "approved" },
-  { id: 6, description: "Electricity Bill", category: "Electricity", amount: 8000, date: "2024-11-30", method: "Cash", recurring: true, status: "approved" },
-  { id: 7, description: "SEMrush", category: "Tools", amount: 12000, date: "2024-11-29", method: "Credit Card", recurring: true, status: "approved" },
-  { id: 8, description: "Team Lunch", category: "Food", amount: 7500, date: "2024-11-28", method: "Cash", recurring: false, status: "approved" },
-  { id: 9, description: "Petrol", category: "Petrol", amount: 3000, date: "2024-11-27", method: "Cash", recurring: false, status: "approved" },
-  { id: 10, description: "Cloudways Hosting", category: "Hosting", amount: 8000, date: "2024-11-26", method: "Credit Card", recurring: true, status: "pending" },
+  { id: 1, description: "Ahrefs Subscription", category: "Tools", amount: 15000, date: "2026-06-04", method: "Credit Card", recurring: true, status: "approved" },
+  { id: 2, description: "Facebook Ads", category: "Ads", amount: 25000, date: "2026-06-04", method: "Bank Transfer", recurring: false, status: "approved" },
+  { id: 3, description: "Office Rent", category: "Office Rent", amount: 50000, date: "2026-06-03", method: "Bank Transfer", recurring: true, status: "approved" },
+  { id: 4, description: "Freelancer Payment", category: "Freelancers", amount: 30000, date: "2026-06-02", method: "JazzCash", recurring: false, status: "pending" },
+  { id: 5, description: "Internet Bill", category: "Internet", amount: 5000, date: "2026-06-01", method: "Cash", recurring: true, status: "approved" },
+  { id: 6, description: "Electricity Bill", category: "Electricity", amount: 8000, date: "2026-05-31", method: "Cash", recurring: true, status: "approved" },
+  { id: 7, description: "SEMrush", category: "Tools", amount: 12000, date: "2026-05-30", method: "Credit Card", recurring: true, status: "approved" },
+  { id: 8, description: "Team Lunch", category: "Food", amount: 7500, date: "2026-05-29", method: "Cash", recurring: false, status: "approved" },
+  { id: 9, description: "Petrol", category: "Petrol", amount: 3000, date: "2026-05-28", method: "Cash", recurring: false, status: "approved" },
+  { id: 10, description: "Cloudways Hosting", category: "Hosting", amount: 8000, date: "2026-05-27", method: "Credit Card", recurring: true, status: "pending" },
 ];
 
 const categoryColors: Record<string, string> = {
@@ -92,9 +79,18 @@ export default function ExpensesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
+  // ✅ FIXED: defaultValues explicitly sets recurring: false as boolean
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
-    defaultValues: { recurring: false },
+    defaultValues: {
+      description: "",
+      amount: "",
+      category: "",
+      date: "",
+      paymentMethod: "",
+      notes: "",
+      recurring: false, // ✅ boolean, not undefined
+    },
   });
 
   const onSubmit = async (data: ExpenseForm) => {
@@ -133,22 +129,16 @@ export default function ExpensesPage() {
   return (
     <div className="p-4 lg:p-6 space-y-6">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Expenses</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Manage and track all your expenses
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">Manage and track all your expenses</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" />
-              Add Expense
+            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Plus className="w-4 h-4" /> Add Expense
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
@@ -161,7 +151,6 @@ export default function ExpensesPage() {
                 <Input placeholder="e.g. Ahrefs Subscription" {...register("description")} />
                 {errors.description && <p className="text-xs text-destructive">{errors.description.message}</p>}
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Amount (PKR)</Label>
@@ -174,13 +163,10 @@ export default function ExpensesPage() {
                   {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
                 </div>
               </div>
-
               <div className="space-y-2">
                 <Label>Category</Label>
                 <Select onValueChange={(v) => setValue("category", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
@@ -189,13 +175,10 @@ export default function ExpensesPage() {
                 </Select>
                 {errors.category && <p className="text-xs text-destructive">{errors.category.message}</p>}
               </div>
-
               <div className="space-y-2">
                 <Label>Payment Method</Label>
                 <Select onValueChange={(v) => setValue("paymentMethod", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select method" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
                   <SelectContent>
                     {paymentMethods.map((m) => (
                       <SelectItem key={m} value={m}>{m}</SelectItem>
@@ -204,35 +187,35 @@ export default function ExpensesPage() {
                 </Select>
                 {errors.paymentMethod && <p className="text-xs text-destructive">{errors.paymentMethod.message}</p>}
               </div>
-
               <div className="space-y-2">
                 <Label>Notes (optional)</Label>
                 <Input placeholder="Any additional notes..." {...register("notes")} />
               </div>
-
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="recurring" {...register("recurring")} className="w-4 h-4 accent-primary" />
+                <input
+                  type="checkbox"
+                  id="recurring"
+                  {...register("recurring")}
+                  className="w-4 h-4 accent-primary"
+                />
                 <Label htmlFor="recurring" className="cursor-pointer">Recurring payment</Label>
               </div>
-
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" className="flex-1" onClick={() => setDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1">Add Expense</Button>
+                <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700">
+                  Add Expense
+                </Button>
               </div>
             </form>
           </DialogContent>
         </Dialog>
       </motion.div>
 
-      {/* Stats Row */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-      >
+      {/* Stats */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
           { label: "Total Expenses", value: `PKR ${totalAmount.toLocaleString()}`, color: "text-red-500" },
           { label: "This Month", value: "PKR 2,45,000", color: "text-orange-500" },
@@ -249,20 +232,12 @@ export default function ExpensesPage() {
       </motion.div>
 
       {/* Filters */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
-        className="flex flex-col sm:flex-row gap-3"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }} className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search expenses..."
-            className="pl-9"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-          />
+          <Input placeholder="Search expenses..." className="pl-9" value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} />
         </div>
         <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v); setCurrentPage(1); }}>
           <SelectTrigger className="w-full sm:w-48">
@@ -277,42 +252,31 @@ export default function ExpensesPage() {
           </SelectContent>
         </Select>
         <Button variant="outline" className="gap-2">
-          <Download className="w-4 h-4" />
-          Export
+          <Download className="w-4 h-4" /> Export
         </Button>
       </motion.div>
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <Card>
           <CardContent className="p-0">
-            {/* Desktop Table */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Description</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Category</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Date</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Method</th>
-                    <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Status</th>
-                    <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Amount</th>
-                    <th className="text-right text-xs font-medium text-muted-foreground px-4 py-3">Actions</th>
+                    {["Description", "Category", "Date", "Method", "Status", "Amount", "Actions"].map((h, i) => (
+                      <th key={i} className={`text-xs font-medium text-muted-foreground px-4 py-3 ${i >= 5 ? "text-right" : "text-left"}`}>
+                        {h}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {paginated.map((expense, i) => (
-                    <motion.tr
-                      key={expense.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                    <motion.tr key={expense.id}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.05 }}
-                      className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
-                    >
+                      className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center">
@@ -320,9 +284,7 @@ export default function ExpensesPage() {
                           </div>
                           <div>
                             <p className="text-sm font-medium">{expense.description}</p>
-                            {expense.recurring && (
-                              <p className="text-xs text-muted-foreground">Recurring</p>
-                            )}
+                            {expense.recurring && <p className="text-xs text-muted-foreground">Recurring</p>}
                           </div>
                         </div>
                       </td>
@@ -348,12 +310,8 @@ export default function ExpensesPage() {
                           <Button variant="ghost" size="sm" className="w-7 h-7 p-0">
                             <Edit className="w-3.5 h-3.5" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-7 h-7 p-0 text-destructive hover:text-destructive"
-                            onClick={() => deleteExpense(expense.id)}
-                          >
+                          <Button variant="ghost" size="sm" className="w-7 h-7 p-0 text-destructive hover:text-destructive"
+                            onClick={() => deleteExpense(expense.id)}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
                         </div>
@@ -364,7 +322,7 @@ export default function ExpensesPage() {
               </table>
             </div>
 
-            {/* Mobile Cards */}
+            {/* Mobile view */}
             <div className="md:hidden space-y-3 p-4">
               {paginated.map((expense) => (
                 <div key={expense.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
@@ -379,13 +337,14 @@ export default function ExpensesPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-red-500">-PKR {expense.amount.toLocaleString()}</p>
-                    <button onClick={() => deleteExpense(expense.id)} className="text-xs text-destructive mt-1">Delete</button>
+                    <button onClick={() => deleteExpense(expense.id)} className="text-xs text-destructive mt-1">
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Empty State */}
             {filtered.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Receipt className="w-12 h-12 text-muted-foreground/30 mb-4" />
@@ -394,30 +353,19 @@ export default function ExpensesPage() {
               </div>
             )}
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-border">
                 <p className="text-xs text-muted-foreground">
                   Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length}
                 </p>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-8 h-8 p-0"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage(currentPage - 1)}
-                  >
+                  <Button variant="outline" size="sm" className="w-8 h-8 p-0"
+                    disabled={currentPage === 1} onClick={() => setCurrentPage(currentPage - 1)}>
                     <ChevronLeft className="w-4 h-4" />
                   </Button>
                   <span className="text-xs font-medium">{currentPage} / {totalPages}</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-8 h-8 p-0"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage(currentPage + 1)}
-                  >
+                  <Button variant="outline" size="sm" className="w-8 h-8 p-0"
+                    disabled={currentPage === totalPages} onClick={() => setCurrentPage(currentPage + 1)}>
                     <ChevronRight className="w-4 h-4" />
                   </Button>
                 </div>

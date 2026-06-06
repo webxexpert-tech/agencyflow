@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 const loginSchema = z.object({
   email: z.string().email("Valid email required"),
@@ -23,7 +23,6 @@ type LoginForm = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const {
     register,
@@ -35,17 +34,32 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     setLoading(true);
-    // Supabase auth will be added later
-    await new Promise((r) => setTimeout(r, 1500));
-    toast.success("Welcome back!");
-    router.push("/dashboard");
-    setLoading(false);
+    try {
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.password,
+      });
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+      if (authData.session) {
+        toast.success("Welcome back!");
+        setTimeout(() => {
+          window.location.replace("/dashboard");
+        }, 500);
+      }
+    } catch {
+      toast.error("Something went wrong!");
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-background flex">
       {/* Left Panel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary p-12 flex-col justify-between">
+      <div className="hidden lg:flex lg:w-1/2 bg-indigo-600 p-12 flex-col justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
             <DollarSign className="w-4 h-4 text-white" />
@@ -83,7 +97,7 @@ export default function LoginPage() {
         >
           {/* Mobile Logo */}
           <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
               <DollarSign className="w-4 h-4 text-white" />
             </div>
             <span className="font-bold text-lg">AgencyFlow</span>
@@ -116,7 +130,7 @@ export default function LoginPage() {
                 <Label htmlFor="password">Password</Label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs text-primary hover:underline"
+                  className="text-xs text-indigo-600 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -146,7 +160,11 @@ export default function LoginPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full h-11" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full h-11 bg-indigo-600 hover:bg-indigo-700"
+              disabled={loading}
+            >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -160,7 +178,10 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-muted-foreground mt-6">
             Don't have an account?{" "}
-            <Link href="/signup" className="text-primary font-medium hover:underline">
+            <Link
+              href="/signup"
+              className="text-indigo-600 font-medium hover:underline"
+            >
               Sign up free
             </Link>
           </p>

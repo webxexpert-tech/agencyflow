@@ -48,7 +48,7 @@ const recurringPayments = [
 ];
 
 const aiInsights = [
-  { text: "Tool expenses increased 22% this month", type: "warning", icon: "📈" },
+  { text: "Tool expenses increased 22% this month", type: "warning", icon: "📊" },
   { text: "Facebook Ads ROI performing well (+340%)", type: "success", icon: "🎯" },
   { text: "Guest posting spend has low ROI", type: "danger", icon: "⚠️" },
   { text: "You're on track to save PKR 40,000 this month", type: "success", icon: "💰" },
@@ -89,7 +89,6 @@ function parseExpenseInput(input: string) {
 export default function DashboardPage() {
   const [quickInput, setQuickInput] = useState("");
   const [adding, setAdding] = useState(false);
-
   const [totalExpenses, setTotalExpenses] = useState(245000);
   const [totalRevenue] = useState(450000);
 
@@ -113,62 +112,30 @@ export default function DashboardPage() {
     }
     setAdding(true);
     await new Promise((r) => setTimeout(r, 600));
-
     const icon = categoryIcons[parsed.category] ?? "💸";
     const newExp = {
       id: Date.now(),
       name: parsed.description.charAt(0).toUpperCase() + parsed.description.slice(1),
       category: parsed.category,
       amount: parsed.amount,
-      date: "Jun 4, 2026",
+      date: "Jun 5, 2026",
       icon,
       type: "one-time",
     };
-
     setRecentExpenses((prev) => [newExp, ...prev.slice(0, 9)]);
     setTotalExpenses((prev) => prev + parsed.amount);
-    toast.success(`✅ PKR ${parsed.amount.toLocaleString()} — ${parsed.category} added!`);
+    toast.success(`PKR ${parsed.amount.toLocaleString()} — ${parsed.category} added!`);
     setQuickInput("");
     setAdding(false);
   };
 
   const stats = [
-    {
-      title: "Total Expenses",
-      value: `PKR ${totalExpenses.toLocaleString()}`,
-      change: "+12%", up: false,
-      icon: TrendingDown, color: "text-red-500", bg: "bg-red-50 dark:bg-red-950/20",
-    },
-    {
-      title: "Total Revenue",
-      value: `PKR ${totalRevenue.toLocaleString()}`,
-      change: "+18%", up: true,
-      icon: TrendingUp, color: "text-green-500", bg: "bg-green-50 dark:bg-green-950/20",
-    },
-    {
-      title: "Net Profit",
-      value: `PKR ${netProfit.toLocaleString()}`,
-      change: "+8%", up: true,
-      icon: DollarSign, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-950/20",
-    },
-    {
-      title: "Burn Rate",
-      value: `PKR ${burnRate.toLocaleString()}/day`,
-      change: "-3%", up: false,
-      icon: Flame, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/20",
-    },
-    {
-      title: "Monthly Savings",
-      value: "PKR 40,000",
-      change: "+5%", up: true,
-      icon: PiggyBank, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-950/20",
-    },
-    {
-      title: "Pending Payments",
-      value: "PKR 35,000",
-      change: "2 due", up: false,
-      icon: Clock, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-950/20",
-    },
+    { title: "Total Expenses", value: `PKR ${totalExpenses.toLocaleString()}`, change: "+12%", up: false, icon: TrendingDown, color: "text-red-500", bg: "bg-red-50 dark:bg-red-950/20" },
+    { title: "Total Revenue", value: `PKR ${totalRevenue.toLocaleString()}`, change: "+18%", up: true, icon: TrendingUp, color: "text-green-500", bg: "bg-green-50 dark:bg-green-950/20" },
+    { title: "Net Profit", value: `PKR ${netProfit.toLocaleString()}`, change: "+8%", up: true, icon: DollarSign, color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-950/20" },
+    { title: "Burn Rate", value: `PKR ${burnRate.toLocaleString()}/day`, change: "-3%", up: false, icon: Flame, color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-950/20" },
+    { title: "Monthly Savings", value: "PKR 40,000", change: "+5%", up: true, icon: PiggyBank, color: "text-purple-500", bg: "bg-purple-50 dark:bg-purple-950/20" },
+    { title: "Pending Payments", value: "PKR 35,000", change: "2 due", up: false, icon: Clock, color: "text-yellow-500", bg: "bg-yellow-50 dark:bg-yellow-950/20" },
   ];
 
   return (
@@ -178,9 +145,7 @@ export default function DashboardPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <motion.div variants={fadeUp}>
           <h1 className="text-2xl font-bold">Good morning! 👋</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Here's your financial overview for June 2026
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">Here&apos;s your financial overview for June 2026</p>
         </motion.div>
         <motion.div variants={fadeUp}>
           <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white">
@@ -206,11 +171,7 @@ export default function DashboardPage() {
                 onKeyDown={(e) => e.key === "Enter" && handleQuickAdd()}
                 className="flex-1 bg-white dark:bg-background"
               />
-              <Button
-                onClick={handleQuickAdd}
-                disabled={adding}
-                className="px-6 bg-indigo-600 hover:bg-indigo-700 text-white"
-              >
+              <Button onClick={handleQuickAdd} disabled={adding} className="px-6 bg-indigo-600 hover:bg-indigo-700 text-white">
                 {adding ? "Adding..." : "Add"}
               </Button>
             </div>
@@ -234,12 +195,8 @@ export default function DashboardPage() {
                 <p className="text-xs text-muted-foreground mb-1">{stat.title}</p>
                 <p className="font-bold text-sm leading-tight">{stat.value}</p>
                 <div className="flex items-center gap-1 mt-1">
-                  {stat.up
-                    ? <ArrowUpRight className="w-3 h-3 text-green-500" />
-                    : <ArrowDownRight className="w-3 h-3 text-red-500" />}
-                  <span className={`text-xs ${stat.up ? "text-green-500" : "text-red-500"}`}>
-                    {stat.change}
-                  </span>
+                  {stat.up ? <ArrowUpRight className="w-3 h-3 text-green-500" /> : <ArrowDownRight className="w-3 h-3 text-red-500" />}
+                  <span className={`text-xs ${stat.up ? "text-green-500" : "text-red-500"}`}>{stat.change}</span>
                 </div>
               </CardContent>
             </Card>
@@ -249,8 +206,7 @@ export default function DashboardPage() {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }} className="lg:col-span-2">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="lg:col-span-2">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-semibold">Revenue vs Expenses — 2026</CardTitle>
@@ -260,8 +216,8 @@ export default function DashboardPage() {
                 <BarChart data={monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v / 1000}k`} />
-                  <Tooltip formatter={(v: number) => `PKR ${v.toLocaleString()}`} />
+                  <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `${v / 1000}k`} />
+                  <Tooltip formatter={(value) => [`PKR ${Number(value).toLocaleString()}`]} />
                   <Legend />
                   <Bar dataKey="revenue" fill="#6366f1" radius={[4, 4, 0, 0]} name="Revenue" />
                   <Bar dataKey="expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} name="Expenses" />
@@ -284,7 +240,7 @@ export default function DashboardPage() {
                       <Cell key={index} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => `PKR ${v.toLocaleString()}`} />
+                  <Tooltip formatter={(value) => [`PKR ${Number(value).toLocaleString()}`]} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="space-y-1 mt-2">
@@ -324,8 +280,8 @@ export default function DashboardPage() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `${v / 1000}k`} />
-                <Tooltip formatter={(v: number) => `PKR ${v.toLocaleString()}`} />
+                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number) => `${v / 1000}k`} />
+                <Tooltip formatter={(value) => [`PKR ${Number(value).toLocaleString()}`]} />
                 <Area type="monotone" dataKey="revenue" stroke="#6366f1" fill="url(#colorRevenue)" name="Revenue" />
                 <Area type="monotone" dataKey="expenses" stroke="#f43f5e" fill="url(#colorExpenses)" name="Expenses" />
               </AreaChart>
@@ -336,21 +292,17 @@ export default function DashboardPage() {
 
       {/* Bottom Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Expenses — LIVE */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold">Recent Expenses</CardTitle>
-                <Badge className="text-xs bg-indigo-100 text-indigo-700 border-0">
-                  {recentExpenses.length} entries
-                </Badge>
+                <Badge className="text-xs bg-indigo-100 text-indigo-700 border-0">{recentExpenses.length} entries</Badge>
               </div>
             </CardHeader>
             <CardContent className="space-y-1 p-0 px-6 pb-4">
               {recentExpenses.map((exp) => (
-                <div key={exp.id}
-                  className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
+                <div key={exp.id} className="flex items-center justify-between py-2.5 border-b border-border last:border-0">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg flex items-center justify-center text-base">
                       {exp.icon}
@@ -361,12 +313,8 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-semibold text-red-500">
-                      -PKR {exp.amount.toLocaleString()}
-                    </p>
-                    <Badge variant={exp.type === "recurring" ? "secondary" : "outline"} className="text-xs">
-                      {exp.type}
-                    </Badge>
+                    <p className="text-sm font-semibold text-red-500">-PKR {exp.amount.toLocaleString()}</p>
+                    <Badge variant={exp.type === "recurring" ? "secondary" : "outline"} className="text-xs">{exp.type}</Badge>
                   </div>
                 </div>
               ))}
@@ -374,7 +322,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Right Column */}
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-3">
@@ -389,9 +336,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold">PKR {p.amount.toLocaleString()}</p>
-                    <Badge variant={p.status === "due" ? "destructive" : "secondary"} className="text-xs">
-                      {p.status}
-                    </Badge>
+                    <Badge variant={p.status === "due" ? "destructive" : "secondary"} className="text-xs">{p.status}</Badge>
                   </div>
                 </div>
               ))}
@@ -408,11 +353,9 @@ export default function DashboardPage() {
             <CardContent className="space-y-2">
               {aiInsights.map((insight, i) => (
                 <div key={i} className={`text-xs p-2.5 rounded-lg flex items-start gap-2 ${
-                  insight.type === "success"
-                    ? "bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400"
-                    : insight.type === "warning"
-                    ? "bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400"
-                    : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400"
+                  insight.type === "success" ? "bg-green-50 dark:bg-green-950/20 text-green-700 dark:text-green-400"
+                  : insight.type === "warning" ? "bg-yellow-50 dark:bg-yellow-950/20 text-yellow-700 dark:text-yellow-400"
+                  : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400"
                 }`}>
                   <span>{insight.icon}</span>
                   <span>{insight.text}</span>

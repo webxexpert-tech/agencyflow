@@ -6,7 +6,8 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Receipt, BarChart3, TrendingUp,
-  Users, Settings, ChevronRight, Bell, Search, X, Check
+  Users, Settings, ChevronRight, Bell, Search, X,
+  Users2, FileText, Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,8 +19,11 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/expenses", label: "Expenses", icon: Receipt },
+  { href: "/dashboard/clients", label: "Clients", icon: Users2 },
+  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
   { href: "/dashboard/reports", label: "Reports", icon: BarChart3 },
-  { href: "/dashboard/roi-tracking", label: "ROI Tracking", icon: TrendingUp },
+  { href: "/dashboard/roi", label: "ROI Tracking", icon: TrendingUp },
+  { href: "/dashboard/budget", label: "Budget", icon: Target },
   { href: "/dashboard/team", label: "Team", icon: Users },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -48,7 +52,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const unread = notifications.filter((n) => !n.read).length;
 
-  // Simulate live notifications every 30 seconds
   useEffect(() => {
     const messages = [
       "New expense added by team member",
@@ -62,10 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const newId = Date.now();
       setLiveNotifs((prev) => [...prev, { id: newId, message: msg }]);
       setNotifications((prev) => [
-        {
-          id: newId, title: "Live Update",
-          message: msg, time: "Just now", read: false, type: "expense"
-        },
+        { id: newId, title: "Live Update", message: msg, time: "Just now", read: false, type: "expense" },
         ...prev,
       ]);
       setTimeout(() => setLiveNotifs((prev) => prev.filter((n) => n.id !== newId)), 4000);
@@ -74,11 +74,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => clearInterval(interval);
   }, []);
 
-  const markAllRead = () =>
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-
-  const markRead = (id: number) =>
-    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markRead = (id: number) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -90,7 +87,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-bold text-base">AgencyFlow</span>
           </div>
         </div>
-        <nav className="flex-1 p-3 space-y-1">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
@@ -126,20 +123,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Topbar */}
         <header className="h-14 border-b border-border bg-card px-6 flex items-center justify-between shrink-0">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search expenses..." className="pl-9 h-9 text-sm" />
+            <Input placeholder="Search..." className="pl-9 h-9 text-sm" />
           </div>
           <div className="flex items-center gap-3 relative">
-            {/* Bell */}
             <div className="relative">
-              <Button
-                variant="ghost" size="icon"
-                className="relative h-9 w-9"
-                onClick={() => setNotifOpen(!notifOpen)}
-              >
+              <Button variant="ghost" size="icon" className="relative h-9 w-9" onClick={() => setNotifOpen(!notifOpen)}>
                 <Bell className="h-4 w-4" />
                 {unread > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center font-bold">
@@ -147,8 +138,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </span>
                 )}
               </Button>
-
-              {/* Notification Dropdown */}
               <AnimatePresence>
                 {notifOpen && (
                   <motion.div
@@ -158,14 +147,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     transition={{ duration: 0.15 }}
                     className="absolute right-0 top-11 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
                   >
-                    {/* Header */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                       <div className="flex items-center gap-2">
                         <Bell className="h-4 w-4 text-indigo-600" />
                         <span className="font-semibold text-sm">Notifications</span>
-                        {unread > 0 && (
-                          <Badge className="text-xs bg-red-100 text-red-600 border-0 px-1.5">{unread}</Badge>
-                        )}
+                        {unread > 0 && <Badge className="text-xs bg-red-100 text-red-600 border-0 px-1.5">{unread}</Badge>}
                       </div>
                       <div className="flex items-center gap-1">
                         {unread > 0 && (
@@ -178,25 +164,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </Button>
                       </div>
                     </div>
-
-                    {/* List */}
                     <div className="max-h-80 overflow-y-auto divide-y divide-border">
                       {notifications.slice(0, 8).map((n) => (
-                        <div
-                          key={n.id}
-                          onClick={() => markRead(n.id)}
-                          className={cn(
-                            "px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors",
-                            !n.read && "bg-indigo-50/50 dark:bg-indigo-900/10"
-                          )}
-                        >
+                        <div key={n.id} onClick={() => markRead(n.id)}
+                          className={cn("px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors", !n.read && "bg-indigo-50/50")}>
                           <div className="flex items-start gap-3">
                             <div className={cn("text-xs px-1.5 py-0.5 rounded font-medium shrink-0 mt-0.5", typeColors[n.type])}>
                               {n.type === "warning" ? "⚠" : n.type === "success" ? "✓" : n.type === "payment" ? "!" : "•"}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
-                                <p className={cn("text-sm font-medium truncate", !n.read && "text-foreground")}>{n.title}</p>
+                                <p className="text-sm font-medium truncate">{n.title}</p>
                                 {!n.read && <div className="h-2 w-2 rounded-full bg-indigo-600 shrink-0" />}
                               </div>
                               <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.message}</p>
@@ -206,29 +184,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
                       ))}
                     </div>
-
-                    {/* Footer */}
                     <div className="px-4 py-2.5 border-t border-border">
-                      <Button variant="ghost" className="w-full text-xs text-indigo-600 h-8">
-                        View all notifications
-                      </Button>
+                      <Button variant="ghost" className="w-full text-xs text-indigo-600 h-8">View all notifications</Button>
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-
             <Avatar className="h-8 w-8 cursor-pointer">
               <AvatarFallback className="text-xs bg-indigo-600 text-white">AO</AvatarFallback>
             </Avatar>
           </div>
         </header>
 
-        {/* Live Notification Toasts */}
         <AnimatePresence>
           {liveNotifs.map((n) => (
-            <motion.div
-              key={n.id}
+            <motion.div key={n.id}
               initial={{ opacity: 0, x: 100 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 100 }}
@@ -240,9 +211,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </AnimatePresence>
 
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
       <Toaster richColors position="top-right" />
     </div>
