@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Receipt, BarChart3, TrendingUp,
   Users, Settings, ChevronRight, Bell, Search, X,
-  Users2, FileText, Target
+  Users2, FileText, Target, LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -77,6 +79,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   const markRead = (id: number) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logged out successfully!");
+    window.location.replace("/login");
+  };
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
@@ -108,7 +116,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border">
+
+        {/* User + Logout */}
+        <div className="p-3 border-t border-border space-y-1">
           <div className="flex items-center gap-2 px-2 py-1.5">
             <Avatar className="h-7 w-7">
               <AvatarFallback className="text-xs bg-indigo-100 text-indigo-700">AO</AvatarFallback>
@@ -118,6 +128,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <p className="text-xs text-muted-foreground truncate">owner@agency.com</p>
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -185,7 +202,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       ))}
                     </div>
                     <div className="px-4 py-2.5 border-t border-border">
-                      <Button variant="ghost" className="w-full text-xs text-indigo-600 h-8">View all notifications</Button>
+                      <Button variant="ghost" className="w-full text-xs text-indigo-600 h-8">
+                        View all notifications
+                      </Button>
                     </div>
                   </motion.div>
                 )}
@@ -197,6 +216,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
+        {/* Live Notifications */}
         <AnimatePresence>
           {liveNotifs.map((n) => (
             <motion.div key={n.id}
