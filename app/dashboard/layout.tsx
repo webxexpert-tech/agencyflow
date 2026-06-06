@@ -89,12 +89,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen bg-background overflow-hidden">
       {/* Sidebar */}
       <aside className="w-52 shrink-0 border-r border-border bg-card flex flex-col">
+        {/* Logo */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">A</div>
             <span className="font-bold text-base">AgencyFlow</span>
           </div>
         </div>
+
+        {/* Nav */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const active = pathname === item.href;
@@ -117,7 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* User + Logout */}
+        {/* ✅ User + Logout Button */}
         <div className="p-3 border-t border-border space-y-1">
           <div className="flex items-center gap-2 px-2 py-1.5">
             <Avatar className="h-7 w-7">
@@ -130,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
           >
             <LogOut className="h-4 w-4" />
             Logout
@@ -138,8 +141,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* Main */}
+      {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
         <header className="h-14 border-b border-border bg-card px-6 flex items-center justify-between shrink-0">
           <div className="relative w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -155,6 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </span>
                 )}
               </Button>
+
               <AnimatePresence>
                 {notifOpen && (
                   <motion.div
@@ -216,7 +221,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </header>
 
-        {/* Live Notifications */}
+        {/* Live Notifications Toast */}
         <AnimatePresence>
           {liveNotifs.map((n) => (
             <motion.div key={n.id}
