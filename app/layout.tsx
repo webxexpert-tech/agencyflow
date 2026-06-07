@@ -20,26 +20,16 @@ import { toast } from "sonner";
 import OnboardingModal from "@/components/onboarding-modal";
 
 const navItems = [
-  { href: "/dashboard",           label: "Dashboard",   icon: LayoutDashboard },
-  { href: "/dashboard/expenses",  label: "Expenses",    icon: Receipt         },
-  { href: "/dashboard/clients",   label: "Clients",     icon: Users2          },
-  { href: "/dashboard/invoices",  label: "Invoices",    icon: FileText        },
-  { href: "/dashboard/reports",   label: "Reports",     icon: BarChart3       },
-  { href: "/dashboard/roi",       label: "ROI Tracking",icon: TrendingUp      },
-  { href: "/dashboard/budget",    label: "Budget",      icon: Target          },
-  { href: "/dashboard/team",      label: "Team",        icon: Users           },
-  { href: "/dashboard/settings",  label: "Settings",    icon: Settings        },
+  { href: "/dashboard",           label: "Dashboard",    icon: LayoutDashboard },
+  { href: "/dashboard/expenses",  label: "Expenses",     icon: Receipt         },
+  { href: "/dashboard/clients",   label: "Clients",      icon: Users2          },
+  { href: "/dashboard/invoices",  label: "Invoices",     icon: FileText        },
+  { href: "/dashboard/reports",   label: "Reports",      icon: BarChart3       },
+  { href: "/dashboard/roi",       label: "ROI Tracking", icon: TrendingUp      },
+  { href: "/dashboard/budget",    label: "Budget",       icon: Target          },
+  { href: "/dashboard/team",      label: "Team",         icon: Users           },
+  { href: "/dashboard/settings",  label: "Settings",     icon: Settings        },
 ];
-
-const typeColors: Record<string, string> = {
-  warning: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  expense: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  report:  "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400",
-  payment: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  success: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  info:    "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400",
-  profile: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-};
 
 const typeIcons: Record<string, string> = {
   warning: "⚠️", expense: "💸", report: "📊",
@@ -75,15 +65,15 @@ function timeAgo(dateStr: string) {
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [notifOpen, setNotifOpen]             = useState(false);
-  const [notifications, setNotifications]     = useState<Notification[]>([]);
-  const [profile, setProfile]                 = useState<Profile | null>(null);
-  const [showOnboarding, setShowOnboarding]   = useState(false);
-  const [userId, setUserId]                   = useState<string | null>(null);
+  const [notifOpen, setNotifOpen]           = useState(false);
+  const [notifications, setNotifications]   = useState<Notification[]>([]);
+  const [profile, setProfile]               = useState<Profile | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [userId, setUserId]                 = useState<string | null>(null);
 
   const unread = notifications.filter((n) => !n.read).length;
 
-  // ── Fetch profile ───────────────────────────────────────────────────
+  // ── Fetch profile ──────────────────────────────────────────────────
   const fetchProfile = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -97,14 +87,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     if (data) {
       setProfile(data);
-      // Show onboarding if not completed — after 5 seconds
       if (!data.onboarding_completed) {
         setTimeout(() => setShowOnboarding(true), 5000);
       }
     }
   }, []);
 
-  // ── Fetch notifications ─────────────────────────────────────────────
+  // ── Fetch notifications ────────────────────────────────────────────
   const fetchNotifications = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -124,36 +113,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchNotifications();
   }, [fetchProfile, fetchNotifications]);
 
-  // ── Realtime notifications subscription ────────────────────────────
+  // ── Poll notifications every 30 seconds (realtime removed — 406 fix) ──
   useEffect(() => {
-    if (!userId) return;
+    const interval = setInterval(() => {
+      fetchNotifications();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
 
-    const channel = supabase
-      .channel("notifications-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          const newNotif = payload.new as Notification;
-          setNotifications((prev) => [newNotif, ...prev]);
-          // Show toast for new notification
-          toast(newNotif.title, {
-            description: newNotif.message,
-            icon: typeIcons[newNotif.type] ?? "🔔",
-          });
-        }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [userId]);
-
-  // ── Mark all read ───────────────────────────────────────────────────
+  // ── Mark all read ──────────────────────────────────────────────────
   const markAllRead = async () => {
     if (!userId) return;
     await supabase
@@ -164,13 +132,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
-  // ── Mark single read ────────────────────────────────────────────────
+  // ── Mark single read ───────────────────────────────────────────────
   const markRead = async (id: string) => {
     await supabase.from("notifications").update({ read: true }).eq("id", id);
     setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
   };
 
-  // ── Logout ──────────────────────────────────────────────────────────
+  // ── Logout ─────────────────────────────────────────────────────────
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logged out successfully!");
@@ -314,17 +282,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <AnimatePresence>
                 {notifOpen && (
                   <>
-                    {/* Backdrop */}
                     <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
-
                     <motion.div
-                      initial={{ opacity:0, y:8, scale:0.95 }}
-                      animate={{ opacity:1, y:0, scale:1 }}
-                      exit={{ opacity:0, y:8, scale:0.95 }}
-                      transition={{ duration:0.15 }}
+                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                      transition={{ duration: 0.15 }}
                       className="absolute right-0 top-11 w-80 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
                     >
-                      {/* Header */}
                       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                         <div className="flex items-center gap-2">
                           <Bell className="h-4 w-4 text-indigo-600" />
@@ -335,19 +300,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </div>
                         <div className="flex items-center gap-1">
                           {unread > 0 && (
-                            <Button variant="ghost" size="sm" className="text-xs h-7 text-indigo-600"
-                              onClick={markAllRead}>
+                            <Button variant="ghost" size="sm" className="text-xs h-7 text-indigo-600" onClick={markAllRead}>
                               Mark all read
                             </Button>
                           )}
-                          <Button variant="ghost" size="icon" className="h-7 w-7"
-                            onClick={() => setNotifOpen(false)}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setNotifOpen(false)}>
                             <X className="h-3.5 w-3.5" />
                           </Button>
                         </div>
                       </div>
 
-                      {/* List */}
                       <div className="max-h-80 overflow-y-auto divide-y divide-border">
                         {notifications.length === 0 ? (
                           <div className="py-8 text-center text-sm text-muted-foreground">
@@ -362,9 +324,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                 !n.read && "bg-indigo-50/50 dark:bg-indigo-950/10"
                               )}>
                               <div className="flex items-start gap-3">
-                                <span className="text-base mt-0.5 shrink-0">
-                                  {typeIcons[n.type] ?? "🔔"}
-                                </span>
+                                <span className="text-base mt-0.5 shrink-0">{typeIcons[n.type] ?? "🔔"}</span>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center justify-between gap-2">
                                     <p className="text-sm font-medium truncate">{n.title}</p>
