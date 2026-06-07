@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { createNotification } from "@/lib/notifications";
 
 const expenseSchema = z.object({
   description: z.string().min(2, "Description required"),
@@ -35,7 +36,6 @@ const expenseSchema = z.object({
 
 type ExpenseForm = z.infer<typeof expenseSchema>;
 
-// Supabase se aane wala data ka type
 type Expense = {
   id: string;
   description: string;
@@ -70,6 +70,22 @@ const categoryColors: Record<string, string> = {
   "Miscellaneous": "bg-gray-100 text-gray-700",
 };
 
+// CSV Export
+function exportCSV(expenses: Expense[]) {
+  const header = "Description,Category,Amount,Date,Payment Method,Status\n";
+  const rows = expenses.map((e) =>
+    `"${e.description}","${e.category}",${e.amount},"${e.date}","${e.payment_method}","${e.status}"`
+  ).join("\n");
+  const blob = new Blob([header + rows], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `expenses-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("CSV exported!");
+}
+
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,78 +99,79 @@ export default function ExpensesPage() {
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
     defaultValues: {
-      description: "",
-      amount: "",
-      category: "",
-      date: "",
-      paymentMethod: "",
-      notes: "",
-      recurring: false,
+      description: "", amount: "", category: "", date: "",
+      paymentMethod: "", notes: "", recurring: false,
     },
   });
 
-  // ✅ Supabase se expenses fetch karo
   const fetchExpenses = async () => {
     setLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setLoading(false); return; }
+
     const { data, error } = await supabase
       .from("expenses")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      toast.error("Failed to load expenses");
-    } else {
-      setExpenses(data || []);
-    }
+    if (error) { toast.error("Failed to load expenses"); }
+    else { setExpenses(data || []); }
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchExpenses();
-  }, []);
+  useEffect(() => { fetchExpenses(); }, []);
 
-  // ✅ Supabase mein expense save karo
   const onSubmit = async (data: ExpenseForm) => {
     setSubmitting(true);
 
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) {
-      toast.error("Please login first");
-      setSubmitting(false);
-      return;
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("Please login first"); setSubmitting(false); return; }
 
     const { error } = await supabase.from("expenses").insert({
-      user_id: userData.user.id,
-      description: data.description,
-      amount: parseInt(data.amount),
-      category: data.category,
-      date: data.date,
+      user_id:        user.id,
+      description:    data.description,
+      amount:         parseInt(data.amount),
+      category:       data.category,
+      date:           data.date,
       payment_method: data.paymentMethod,
-      notes: data.notes || "",
-      recurring: data.recurring,
-      status: "approved",
+      notes:          data.notes || "",
+      recurring:      data.recurring,
+      status:         "approved",
     });
 
     if (error) {
       toast.error("Failed to add expense: " + error.message);
     } else {
       toast.success(`✅ PKR ${parseInt(data.amount).toLocaleString()} expense added!`);
+
+      // ── Real notification ──────────────────────────────────────────
+      await createNotification(
+        user.id,
+        "💸 Expense Added",
+        `PKR ${parseInt(data.amount).toLocaleString()} — ${data.category} recorded`,
+        "expense"
+      );
+
       reset();
       setDialogOpen(false);
-      fetchExpenses(); // list refresh karo
+      fetchExpenses();
     }
     setSubmitting(false);
   };
 
-  // ✅ Supabase se expense delete karo
   const deleteExpense = async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from("expenses").delete().eq("id", id);
-    if (error) {
-      toast.error("Failed to delete expense");
-    } else {
+    if (error) { toast.error("Failed to delete expense"); }
+    else {
       toast.success("Expense deleted");
       setExpenses(expenses.filter((e) => e.id !== id));
+
+      // notification for delete
+      if (user) {
+        await createNotification(user.id, "🗑️ Expense Deleted", "An expense was removed", "warning");
+      }
     }
   };
 
@@ -211,9 +228,7 @@ export default function ExpensesPage() {
                 <Select onValueChange={(v) => setValue("category", v)}>
                   <SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
+                    {categories.map((cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {errors.category && <p className="text-xs text-destructive">{errors.category.message}</p>}
@@ -223,9 +238,7 @@ export default function ExpensesPage() {
                 <Select onValueChange={(v) => setValue("paymentMethod", v)}>
                   <SelectTrigger><SelectValue placeholder="Select method" /></SelectTrigger>
                   <SelectContent>
-                    {paymentMethods.map((m) => (
-                      <SelectItem key={m} value={m}>{m}</SelectItem>
-                    ))}
+                    {paymentMethods.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {errors.paymentMethod && <p className="text-xs text-destructive">{errors.paymentMethod.message}</p>}
@@ -243,7 +256,7 @@ export default function ExpensesPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={submitting} className="flex-1 bg-indigo-600 hover:bg-indigo-700">
-                  {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</> : "Add Expense"}
+                  {submitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : "Add Expense"}
                 </Button>
               </div>
             </form>
@@ -255,17 +268,15 @@ export default function ExpensesPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }} className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Expenses", value: `PKR ${totalAmount.toLocaleString()}`, color: "text-red-500" },
-          { label: "Total Records", value: `${expenses.length} entries`, color: "text-orange-500" },
-          { label: "Recurring", value: `${expenses.filter(e => e.recurring).length} payments`, color: "text-purple-500" },
-          { label: "Pending", value: `${expenses.filter(e => e.status === "pending").length} approvals`, color: "text-yellow-500" },
+          { label: "Total Expenses",  value: `PKR ${totalAmount.toLocaleString()}`,                    color: "text-red-500"    },
+          { label: "Total Records",   value: `${expenses.length} entries`,                             color: "text-orange-500" },
+          { label: "Recurring",       value: `${expenses.filter(e => e.recurring).length} payments`,   color: "text-purple-500" },
+          { label: "Pending",         value: `${expenses.filter(e => e.status === "pending").length} approvals`, color: "text-yellow-500" },
         ].map((s, i) => (
-          <Card key={i}>
-            <CardContent className="p-4">
-              <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
-              <p className={`font-bold text-sm ${s.color}`}>{s.value}</p>
-            </CardContent>
-          </Card>
+          <Card key={i}><CardContent className="p-4">
+            <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
+            <p className={`font-bold text-sm ${s.color}`}>{s.value}</p>
+          </CardContent></Card>
         ))}
       </motion.div>
 
@@ -284,13 +295,11 @@ export default function ExpensesPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
+            {categories.map((cat) => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Button variant="outline" className="gap-2">
-          <Download className="w-4 h-4" /> Export
+        <Button variant="outline" className="gap-2" onClick={() => exportCSV(expenses)}>
+          <Download className="w-4 h-4" /> Export CSV
         </Button>
       </motion.div>
 
@@ -298,8 +307,6 @@ export default function ExpensesPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <Card>
           <CardContent className="p-0">
-
-            {/* Loading */}
             {loading && (
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
@@ -313,7 +320,7 @@ export default function ExpensesPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border bg-muted/50">
-                        {["Description", "Category", "Date", "Method", "Status", "Amount", "Actions"].map((h, i) => (
+                        {["Description","Category","Date","Method","Status","Amount","Actions"].map((h, i) => (
                           <th key={i} className={`text-xs font-medium text-muted-foreground px-4 py-3 ${i >= 5 ? "text-right" : "text-left"}`}>
                             {h}
                           </th>
@@ -392,7 +399,7 @@ export default function ExpensesPage() {
                   ))}
                 </div>
 
-                {filtered.length === 0 && !loading && (
+                {filtered.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-16 text-center">
                     <Receipt className="w-12 h-12 text-muted-foreground/30 mb-4" />
                     <p className="font-medium text-muted-foreground">No expenses found</p>
