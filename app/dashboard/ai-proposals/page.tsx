@@ -134,14 +134,12 @@ export default function AIProposalGeneratorPage() {
           </div>
         </motion.div>
 
-        <Separator />
-
         {/* Proposals List */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.12 }}>
           {loading ? (
-            <div className="flex items-center justify-center p-12">
+            <div className="flex items-center justify-center p-12 bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl">
               <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
-              <span className="ml-2 text-muted-foreground">Loading proposals...</span>
+              <span className="ml-3 text-gray-700 font-medium">Loading proposals...</span>
             </div>
           ) : proposals.length === 0 ? (
             <Card className="p-16 text-center rounded-xl border-0 shadow-md bg-gradient-to-br from-indigo-50 via-white to-violet-50">
@@ -172,30 +170,31 @@ export default function AIProposalGeneratorPage() {
                     setViewMode('view');
                   }}
                 >
-                  <Card className="p-4 hover:shadow-xl transition-shadow cursor-pointer rounded-lg">
+                  <Card className="p-5 hover:shadow-2xl transition-all cursor-pointer rounded-xl border-0 shadow-md hover:scale-[1.02] bg-white">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{proposal.client_name}</h3>
-                        <p className="text-sm text-muted-foreground">
+                        <h3 className="font-bold text-lg text-gray-900">{proposal.client_name}</h3>
+                        <p className="text-sm text-gray-600 mt-1">
                           {proposal.company_name} • {proposal.service_type}
                         </p>
-                        <div className="flex items-center gap-3 mt-3">
+                        <div className="flex items-center gap-3 mt-4">
                           <Badge
                             variant={proposal.status === 'draft' ? 'secondary' : 'default'}
+                            className={proposal.status === 'draft' ? 'bg-amber-100 text-amber-800 border-0' : 'bg-green-100 text-green-800 border-0'}
                           >
                             {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
                           </Badge>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-gray-500 font-medium">
                             {new Date(proposal.created_at).toLocaleDateString()}
                           </span>
                           {proposal.proposal_content.pricing.total > 0 && (
-                            <span className="text-xs font-medium text-indigo-600">
+                            <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">
                               ${proposal.proposal_content.pricing.total.toLocaleString()}
                             </span>
                           )}
                         </div>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                      <ArrowRight className="h-5 w-5 text-indigo-600 font-bold mt-1" />
                     </div>
                   </Card>
                 </motion.div>
