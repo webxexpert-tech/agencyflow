@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Receipt, BarChart3, TrendingUp,
   Users, Settings, ChevronRight, Bell, Search, X,
-  Users2, FileText, Target, LogOut, CheckCheck,
+  Users2, FileText, Target, LogOut, CheckCheck, Sparkles,
+  Video, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,9 @@ const navItems = [
   { href: "/dashboard/expenses",  label: "Expenses",    icon: Receipt         },
   { href: "/dashboard/clients",   label: "Clients",     icon: Users2          },
   { href: "/dashboard/invoices",  label: "Invoices",    icon: FileText        },
+  { href: "/dashboard/ai-proposals", label: "AI Proposals", icon: Sparkles   },
+  { href: "/dashboard/meetings",  label: "Meetings",    icon: Video           },
+  { href: "/dashboard/scope-detector", label: "Scope Detector", icon: AlertTriangle },
   { href: "/dashboard/reports",   label: "Reports",     icon: BarChart3       },
   { href: "/dashboard/roi",       label: "ROI Tracking",icon: TrendingUp      },
   { href: "/dashboard/budget",    label: "Budget",      icon: Target          },

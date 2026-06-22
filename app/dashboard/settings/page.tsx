@@ -214,6 +214,7 @@ export default function SettingsPage() {
       phone: company.phone,
       website: company.website,
       address: company.address,
+      logo_url: company.logo_url,
       first_name: profile.first_name,
       last_name: profile.last_name,
       full_name: fullName,
