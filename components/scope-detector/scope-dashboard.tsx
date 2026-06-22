@@ -29,16 +29,29 @@ export function ScopeDashboard({ organizationId, projectId }: ScopeDashboardProp
     try {
       const response = await fetch(`/api/v1/scope-detector/${projectId}`);
 
+      // Handle 404 as empty state (not an error)
+      if (response.status === 404) {
+        setTracking(null);
+        setAlerts([]);
+        return;
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to fetch scope status');
+        // Silently handle errors without showing toast
+        console.warn('Failed to fetch scope status:', response.statusText);
+        setTracking(null);
+        setAlerts([]);
+        return;
       }
 
       const data = await response.json();
-      setTracking(data.tracking);
+      setTracking(data.tracking || null);
       setAlerts(data.alerts || []);
     } catch (error) {
-      console.error('Fetch error:', error);
-      toast.error('Failed to load scope status');
+      // Silently handle network errors - show empty state instead
+      console.warn('Fetch error:', error);
+      setTracking(null);
+      setAlerts([]);
     } finally {
       setIsLoading(false);
     }
